@@ -1,3 +1,3 @@
 # Sudoku Solver
 
-This is the boilerplate for the Sudoku Solver project. Instructions to complete your project can be found at https://www.freecodecamp.org/learn/quality-assurance/quality-assurance-projects/sudoku-solver
+My implementation of the Sudoku Solver project for freeCodeCamp's Quality Assurance Course. The original boilerplate repository can be found at [freeCodeCamp's GitHub Page](https://github.com/freeCodeCamp/boilerplate-project-sudoku-solver.git).

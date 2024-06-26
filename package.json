@@ -1,7 +1,8 @@
 {
   "name": "sudoku-solver",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Quality Assurance 4: Sudoku Solver",
+  "author": "Austin Weeks",
   "main": "server.js",
   "scripts": {
     "start": "nodemon server.js",

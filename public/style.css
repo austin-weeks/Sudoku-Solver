@@ -1,19 +1,27 @@
+html {
+  font-family: 'Inter';
+  font-size: 14px;
+}
 code {
   background: #d0d0d5;
+  font-family: 'JetBrains Mono';
 }
 
 .container {
   display: flex;
   flex-direction: column;
+  justify-content: space-evenly;
+  padding: 1rem;
 }
 
 .form-container {
-  max-width: 95%;
+  max-width: 70%;
   align-self: flex-start;
 }
 
 textarea {
   width: 100%;
+  font-family: 'JetBrains Mono';
 }
 
 #user-stories {
@@ -93,7 +101,7 @@ td {
   border-right: 3px solid;
 }
 
-@media (min-width: 800px) {
+@media (min-width: 1200px) {
   .container {
     flex-direction: row;
   }

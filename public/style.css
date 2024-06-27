@@ -2,6 +2,9 @@ html {
   font-family: 'Inter';
   font-size: 14px;
 }
+body {
+  margin: auto;
+}
 code {
   background: #d0d0d5;
   font-family: 'JetBrains Mono';

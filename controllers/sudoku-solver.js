@@ -1,4 +1,5 @@
 const cells = require('./cells');
+
 class SudokuSolver {
 
   constructor() {
@@ -49,129 +50,136 @@ class SudokuSolver {
   validate(puzzleString) {
     if (!this.validatePuzzleLength(puzzleString)) return 'invalid length';
     if (!this.validatePuzzleCharacters(puzzleString)) return 'invalid characters';
+    const puzzleArr = puzzleString.split('');
+    if (!this.validateBoard(puzzleArr)) return 'unsolvable';
     return 'valid';
   }
 
-  insertValue(puzzleString, row, column, value) {
-    const index = cells.find(cell => cell.row === row && cell.col === column);
-    const splitPuzzle = puzzleString.split('');
-    splitPuzzle[index] = value;
-    return splitPuzzle.join('');
+  validateBoard(puzzleArr) {
+    return this.validateRows(puzzleArr) &&
+      this.validateColumns(puzzleArr) &&
+      this.validateRegions(puzzleArr);
+  }
+  validateRows(puzzleArr) {
+    for (const row of this.rows) {
+      const rowArr = puzzleArr.slice(row[1], row[2]);
+      if (!this.validateSet(rowArr)) return false;
+    }
+    return true;
+  }
+  validateColumns(puzzleArr) {
+    for (const col of this.columns) {
+      let columnArr = [];
+      for (const cell of col[1]) columnArr.push(puzzleArr[cell]);
+      if (!this.validateSet(columnArr)) return false;
+    }
+    return true;
+  }
+  validateRegions(puzzleArr) {
+    for (const reg of this.regions) {
+      let regionArr = [];
+      for (const cell of reg[1]) regionArr.push(puzzleArr[cell]);
+      if (!this.validateSet(regionArr)) return false;
+    }
+    return true;
+  }
+
+
+  insertValue(puzzleArr, row, column, value) {
+    const newPuzzle = puzzleArr.slice();
+    const index = this.getCell(row, column).index;
+    newPuzzle[index] = value;
+    return newPuzzle;
   }
   isExistingInput(puzzleString, row, column, value) {
-    const index = cells.find(cell => cell.row === row && cell.col === column);
+    const index = this.getCell(row, column).index;
     return puzzleString[index] === value;
   }
 
-  checkRowPlacement(puzzleString, row, column, value) {
-    const newPuzzle = this.insertValue(puzzleString, row, column, value);
+  checkPlacement(puzzleArr, row, column, value) {
+    return this.checkRowPlacement(puzzleArr, row, column, value) &&
+      this.checkColPlacement(puzzleArr, row, column, value) &&
+      this.checkRegionPlacement(puzzleArr, row, column, value);
+  }
+  checkRowPlacement(puzzleArr, row, column, value) {
+    const newPuzzleArr = this.insertValue(puzzleArr, row, column, value);
     const rowEl = this.rows.find(el => el[0] === row);
-    const rowStr = newPuzzle.substring(rowEl[1], rowEl[2]);
-    return this.validateSet(rowStr);
+    const rowArr = newPuzzleArr.slice(rowEl[1], rowEl[2]);
+    return this.validateSet(rowArr);
   }
-
-  checkColPlacement(puzzleString, row, column, value) {
-    const newPuzzle = this.insertValue(puzzleString, row, column, value);
+  checkColPlacement(puzzleArr, row, column, value) {
+    const newPuzzleArr = this.insertValue(puzzleArr, row, column, value);
     const colEl = this.columns.find(el => el[0] === column);
-    let columnStr = '';
-    for (const cell of colEl[1]) columnStr += newPuzzle[cell];
-    return this.validateSet(columnStr);
+    let colArr = [];
+    for (const cell of colEl[1]) colArr.push(newPuzzleArr[cell]);
+    return this.validateSet(colArr);
   }
-
-  checkRegionPlacement(puzzleString, row, column, value) {
+  checkRegionPlacement(puzzleArr, row, column, value) {
     let verticalPlacement;
     let horizontalPlacement;
     switch (row) {
-      case 'A':
-      case 'B':
-      case 'C':
-        verticalPlacement = 'top'; break;
-      case 'D':
-      case 'E':
-      case 'F':
-        verticalPlacement = 'middle'; break;
-      case 'G':
-      case 'H':
-      case 'I':
-        verticalPlacement = 'bottom'; break;
+      case 'A': case 'B': case 'C': verticalPlacement = 'top'; break;
+      case 'D': case 'E': case 'F': verticalPlacement = 'middle'; break;
+      case 'G': case 'H': case 'I': verticalPlacement = 'bottom'; break;
       default: return false;
     }
     switch (column) {
-      case '1':
-      case '2':
-      case '3':
-        horizontalPlacement = 'left'; break;
-      case '4':
-      case '5':
-      case '6':
-        horizontalPlacement = 'center'; break;
-      case '7':
-      case '8':
-      case '9':
-        horizontalPlacement = 'right'; break;
+      case '1': case '2': case '3': horizontalPlacement = 'left'; break;
+      case '4': case '5': case '6': horizontalPlacement = 'center'; break;
+      case '7': case '8': case '9': horizontalPlacement = 'right'; break;
       default: return false;
     }
-    const newPuzzle = this.insertValue(puzzleString, row, column, value);
+    const newPuzzleArr = this.insertValue(puzzleArr, row, column, value);
     const region = `${verticalPlacement}-${horizontalPlacement}`;
     const regionEl = this.regions.find(el => el[0] === region);
-    let regionStr = '';
-    for (const cell of regionEl[1]) regionStr += newPuzzle[cell];
-    return this.validateSet(regionStr);
+    let regionArr = [];
+    for (const cell of regionEl[1]) regionArr.push(newPuzzleArr[cell]);
+    return this.validateSet(regionArr);
   }
 
   solve(puzzleString) {
-    //Check Rows
-    console.log(
-    this.validateRows(puzzleString));
-    //Check Columns
-    console.log(
-    this.validateColumns(puzzleString));
-    //Check Regions
-    console.log(
-    this.validateRegions(puzzleString));
+    const puzzleArr = puzzleString.split('');
+    let possibleAnswers = this.getPossibleAnswers(puzzleArr);
+    while (Object.keys(possibleAnswers). length > 0) {
+      //Loop through each index with only one answer, set to board, and remove index from answeres object.
+      for (const [index, answers] of Object.entries(possibleAnswers)) {
+        if (answers.length === 1) {
+          puzzleArr[parseInt(index)] = answers[0];
+          delete possibleAnswers[index];
+        }
+      }
+      possibleAnswers = this.getPossibleAnswers(puzzleArr);
+    }
+    return puzzleArr.join('');
+  }
+  //Loop through each empty cell of the puzzle and get possible answers
+  getPossibleAnswers(puzzleArr) {
+    const possibleAnswers = {};      
+    for (let i = 0; i < puzzleArr.length; i++) {
+      const char = puzzleArr[i];
+      if (char !== '.') continue;
+      const {row, col} = cells.find(cell => cell.index === i);
+      for (let num = 1; num <= 9; num++) {
+        if (this.checkPlacement(puzzleArr, row, col, num)) {
+          if (possibleAnswers[i]) possibleAnswers[i].push(num);
+          else possibleAnswers[i] = [num];
+        }
+      }
+    }
+    return possibleAnswers;
   }
 
-
-  validateRows(puzzleString) {
-    console.log('ROWS');
-    for (const row of this.rows) {
-      const rowStr = puzzleString.substring(row[1], row[2]);
-      if (!this.validateSet(rowStr)) return false;
-    }
-    return true;
-  }
-  validateColumns(puzzleString) {
-    console.log('COLUMNS');
-    for (const col of this.columns) {
-      let columnStr = '';
-      for (const cell of col[1]) columnStr += puzzleString[cell];
-      if (!this.validateSet(columnStr)) return false;
-    }
-    return true;
-  }
-  validateRegions(puzzleString) {
-    console.log('REGIONS');
-    for (const reg of this.regions) {
-      let regionStr = '';
-      for (const cell of reg[1]) regionStr += puzzleString[cell];
-      if (!this.validateSet(regionStr)) return false;
-    }
-    return true;
+  getCell(row, column) {
+    return cells.find(cell => cell.row === row && cell.col === column);
   }
 
   //Checks for duplicate values
-  validateSet(groupingStr) {
-    const group = groupingStr.split('');
-    const counts = {}
-    for (const num of group) {
-      counts[num] = counts[num] ? counts[num] + 1 : 1;
-    }
-    for (const [key, value] of Object.entries(counts)) {
-      if (value !== 1 && key !== '.') return false;
-    }
+  validateSet(setArr) {
+    const counts = {};
+    for (const num of setArr) counts[num] = counts[num] ? counts[num] + 1 : 1;
+    for (const [key, value] of Object.entries(counts)) if (value !== 1 && key !== '.') return false;
     return true;
   }
 }
 
 module.exports = SudokuSolver;
-

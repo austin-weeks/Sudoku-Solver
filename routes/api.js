@@ -13,6 +13,10 @@ module.exports = function (app) {
         res.json({error: 'Required field(s) missing'});
         return;
       }
+      if (coordinate.length !== 2) {
+        res.json({error: 'Invalid coordinate'});
+        return;
+      }
       const coords = coordinate.split('');
       const row = coords[0].toUpperCase();
       const col = coords[1];
@@ -22,7 +26,7 @@ module.exports = function (app) {
         return;
       }
       if (!solver.validatePuzzleLength(puzzle)) {
-        res.json({eror: 'Expected puzzle to be 81 characters long'});
+        res.json({error: 'Expected puzzle to be 81 characters long'});
         return;
       }
       if (!row.match(/[A-I]/i) || !col.match(/[1-9]/)) {
@@ -38,16 +42,20 @@ module.exports = function (app) {
         return;
       }
 
-      let conflicts = [];
-      if (solver.checkRowPlacement(puzzle, row, col, value)) conflicts.push('row');
-      if (solver.checkColPlacement(puzzle, row, col, value)) conflicts.push('column');
-      if (solver.checkRegionPlacement(puzzle, row, col, value)) conflicts.push('region');
-      
-      if (!conflicts[0]) res.json({valid: true});
-      else res.json({
-        valid: false,
-        conflicts
-      });
+      let conflict = [];
+      let puzzleArr = puzzle.split('');
+      if (!solver.checkRowPlacement(puzzleArr, row, col, value)) conflict.push('row');
+      if (!solver.checkColPlacement(puzzleArr, row, col, value)) conflict.push('column');
+      if (!solver.checkRegionPlacement(puzzleArr, row, col, value)) conflict.push('region');
+
+      if (conflict.length === 0) res.json({valid: true});
+      else {
+        const json = {
+          valid: false,
+          conflict
+        }
+        res.json(json);
+      }
     });
 
   app.route('/api/solve')
@@ -57,9 +65,6 @@ module.exports = function (app) {
         res.json({error: 'Required field missing'});
         return;
       }
-      //-----TESTING-----
-      solver.solve(puzzle);
-      //-----END TEST----
       const validate = solver.validate(puzzle);
       if (validate === 'invalid length') {
         res.json({error: 'Expected puzzle to be 81 characters long'});
@@ -69,8 +74,12 @@ module.exports = function (app) {
         res.json({error: 'Invalid characters in puzzle'});
         return;
       }
+      if (validate === 'unsolvable') {
+        res.json({error: 'Puzzle cannot be solved'});
+        return;
+      }
       res.json({
-        solution: "."
+        solution: solver.solve(puzzle)
       });
     });
 };
